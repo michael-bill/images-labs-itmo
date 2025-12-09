@@ -4,9 +4,9 @@
 
 import numpy as np
 from numba import njit, prange
-from math_utils import dot, reflect, random_cosine_hemisphere, length
-from scene import intersect_scene, sample_light_point
-from camera import get_ray
+from .math_utils import dot, reflect, random_cosine_hemisphere, length
+from .scene import intersect_scene, sample_light_point
+from .camera import get_ray
 
 
 @njit(cache=True, fastmath=True)

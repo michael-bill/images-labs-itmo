@@ -3,7 +3,7 @@
 """
 
 import numpy as np
-from scene import Scene
+from .scene import Scene
 
 
 def add_box(scene: Scene, position, width: float, height: float,

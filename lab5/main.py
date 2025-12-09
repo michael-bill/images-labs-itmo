@@ -9,10 +9,10 @@ Path Tracer - Синтез изображений методом трассир�
 
 import time
 import numpy as np
-from camera import Camera
-from cornell_box import create_cornell_box
-from renderer import render_image
-from postprocess import tonemap_and_gamma, save_ppm, save_png
+from src.camera import Camera
+from src.cornell_box import create_cornell_box
+from src.renderer import render_image
+from src.postprocess import tonemap_and_gamma, save_ppm, save_png
 
 
 # КОНФИГУРАЦИЯ
@@ -107,8 +107,8 @@ def main():
     print("[4/4] Постобработка и сохранение...")
     image = tonemap_and_gamma(image, gamma=CONFIG['gamma'], exposure=CONFIG['exposure'])
 
-    save_ppm("result.ppm", image)
-    save_png("result.png", image)
+    save_ppm("output/result.ppm", image)
+    save_png("output/result.png", image)
 
     print("\n" + "=" * 60)
     print("Готово!")

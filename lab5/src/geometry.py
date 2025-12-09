@@ -4,7 +4,7 @@
 
 import numpy as np
 from numba import njit
-from math_utils import dot, cross, normalize
+from .math_utils import dot, cross, normalize
 
 
 @njit(cache=True, fastmath=True)

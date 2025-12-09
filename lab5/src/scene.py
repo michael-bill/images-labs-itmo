@@ -4,8 +4,8 @@
 
 import numpy as np
 from numba import njit
-from geometry import ray_triangle_intersect, compute_triangle_normal, triangle_area, sample_triangle_point
-from math_utils import dot, length
+from .geometry import ray_triangle_intersect, compute_triangle_normal, triangle_area, sample_triangle_point
+from .math_utils import dot, length
 
 
 class Scene:
