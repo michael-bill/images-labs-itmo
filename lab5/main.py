@@ -15,7 +15,7 @@ from renderer import render_image
 from postprocess import tonemap_and_gamma, save_ppm, save_png
 
 
-# ==================== КОНФИГУРАЦИЯ ====================
+# КОНФИГУРАЦИЯ
 # Параметры можно изменить для получения разных результатов
 
 CONFIG = {
