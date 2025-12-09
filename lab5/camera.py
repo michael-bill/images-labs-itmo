@@ -1,5 +1,5 @@
 """
-Камера для рендеринга.
+Точечная (pinhole) камера для рендеринга.
 """
 
 import numpy as np
@@ -8,39 +8,47 @@ from math_utils import normalize, cross
 
 
 class Camera:
-    """Точечная (pinhole) камера."""
+    """
+    Точечная камера.
+    
+    Параметры:
+        position: позиция камеры в пространстве
+        look_at: точка, на которую смотрит камера
+        up: вектор "вверх" (обычно [0, 1, 0])
+        fov: угол обзора по вертикали в градусах
+        width, height: размер изображения в пикселях
+    """
 
-    def __init__(self, position, look_at, up, fov: float, width: int, height: int):
+    def __init__(self, position, look_at, up, fov, width, height):
         self.position = np.array(position, dtype=np.float64)
         self.width = width
         self.height = height
 
-        # Базис камеры
-        forward = normalize(np.array(look_at, dtype=np.float64) - self.position)
-        right = normalize(cross(forward, np.array(up, dtype=np.float64)))
-        up_vec = cross(right, forward)
+        # Вычисляем базис камеры (forward, right, up)
+        self.forward = normalize(np.array(look_at, dtype=np.float64) - self.position)
+        self.right = normalize(cross(self.forward, np.array(up, dtype=np.float64)))
+        self.up = cross(self.right, self.forward)
 
-        self.forward = forward
-        self.right = right
-        self.up = up_vec
-
-        # Размер экрана в мировых координатах
+        # Размер виртуального экрана (зависит от FOV)
         aspect = width / height
         self.half_height = np.tan(fov * np.pi / 360.0)
         self.half_width = self.half_height * aspect
 
 
-@njit(cache=True)
-def get_ray(x: int, y: int, width: int, height: int,
-            position: np.ndarray, forward: np.ndarray,
-            right: np.ndarray, up: np.ndarray,
-            half_width: float, half_height: float,
-            jitter: bool = True):
+@njit(cache=True, fastmath=True)
+def get_ray(x, y, width, height, position, forward, right, up, 
+            half_width, half_height, jitter=True):
     """
-    Генерирует направление луча для пикселя (x, y).
-    Возвращает (origin, direction).
+    Генерирует луч из камеры через пиксель (x, y).
+    
+    Параметры:
+        x, y: координаты пикселя
+        jitter: если True, добавляет случайное смещение для антиалиасинга
+    
+    Возвращает:
+        (origin, direction) - начало и направление луча
     """
-    # Смещение внутри пикселя для антиалиасинга
+    # Случайное смещение внутри пикселя для антиалиасинга
     if jitter:
         px = x + np.random.random()
         py = y + np.random.random()
@@ -48,10 +56,11 @@ def get_ray(x: int, y: int, width: int, height: int,
         px = x + 0.5
         py = y + 0.5
 
-    # Нормализованные координаты [-1, 1]
+    # Нормализованные координаты экрана [-1, 1]
     u = (2.0 * px / width - 1.0) * half_width
     v = (1.0 - 2.0 * py / height) * half_height
 
+    # Направление луча
     direction = forward + right * u + up * v
     direction = direction / np.sqrt(direction[0]**2 + direction[1]**2 + direction[2]**2)
 

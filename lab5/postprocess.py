@@ -5,47 +5,29 @@
 import numpy as np
 
 
-def reinhard_tonemap(image: np.ndarray) -> np.ndarray:
-    """Тонемаппинг Рейнхарда: L / (1 + L)"""
+def reinhard_tonemap(image):
+    """
+    Тонемаппинг Рейнхарда: L_out = L / (1 + L)
+    Преобразует HDR изображение в диапазон [0, 1].
+    """
     return image / (1.0 + image)
 
 
-def exposure_tonemap(image: np.ndarray, exposure: float = 1.0) -> np.ndarray:
-    """Экспозиционный тонемаппинг: 1 - exp(-exposure * L)"""
-    return 1.0 - np.exp(-exposure * image)
-
-
-def tonemap_and_gamma(image: np.ndarray, gamma: float = 2.2,
-                      normalize_method: str = 'reinhard',
-                      exposure: float = 1.5) -> np.ndarray:
+def tonemap_and_gamma(image, gamma=2.2, exposure=1.5):
     """
-    Тонемаппинг и гамма-коррекция.
-
-    normalize_method: 
-        'max' - нормализация по максимальной яркости
-        'mean' - по средней яркости (с множителем)
-        'reinhard' - тонемаппинг Рейнхарда
-        'exposure' - экспозиционный тонемаппинг
-        число - по заданному значению
+    Постобработка изображения:
+    1. Тонемаппинг Рейнхарда (HDR -> LDR)
+    2. Отсечение значений выше 1
+    3. Гамма-коррекция
+    
+    Параметры:
+        gamma: показатель гамма-коррекции (обычно 2.2)
+        exposure: коэффициент экспозиции (яркость)
     """
     image = image.copy()
 
-    # Тонемаппинг / нормализация
-    if normalize_method == 'max':
-        max_val = np.max(image)
-        if max_val > 0:
-            image = image / max_val
-    elif normalize_method == 'mean':
-        # Используем percentile для робастности к выбросам
-        target = np.percentile(image, 90)
-        if target > 0:
-            image = image / (target * 2)
-    elif normalize_method == 'reinhard':
-        image = reinhard_tonemap(image * exposure)
-    elif normalize_method == 'exposure':
-        image = exposure_tonemap(image, exposure)
-    elif isinstance(normalize_method, (int, float)):
-        image = image / normalize_method
+    # Тонемаппинг Рейнхарда
+    image = reinhard_tonemap(image * exposure)
 
     # Отсечение значений выше 1
     image = np.clip(image, 0, 1)
@@ -56,9 +38,19 @@ def tonemap_and_gamma(image: np.ndarray, gamma: float = 2.2,
     return image
 
 
-def save_ppm(filename: str, image: np.ndarray):
-    """Сохранение в формате PPM (P3 - текстовый)."""
+def save_ppm(filename, image):
+    """
+    Сохранение в формате PPM (P3 - текстовый).
+    
+    Формат PPM:
+    - P3 - магическое число (текстовый RGB)
+    - ширина высота
+    - максимальное значение (255)
+    - RGB значения пикселей
+    """
     height, width = image.shape[:2]
+    
+    # Преобразуем в 8-бит
     image_8bit = (image * 255).astype(np.uint8)
 
     with open(filename, 'w') as f:
@@ -73,8 +65,8 @@ def save_ppm(filename: str, image: np.ndarray):
     print(f"Сохранено: {filename}")
 
 
-def save_png(filename: str, image: np.ndarray):
-    """Сохранение в формате PNG."""
+def save_png(filename, image):
+    """Сохранение в формате PNG (требует PIL/Pillow)."""
     try:
         from PIL import Image
         image_8bit = (image * 255).astype(np.uint8)
@@ -84,4 +76,3 @@ def save_png(filename: str, image: np.ndarray):
     except ImportError:
         print("PIL не найден, сохраняю в PPM")
         save_ppm(filename.replace('.png', '.ppm'), image)
-
